@@ -69,6 +69,11 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
 
+{
+  'ThePrimeagen/harpoon',
+  branch = 'harpoon2',
+  requires = 'nvim-lua/plenary.nvim',
+},
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
@@ -275,7 +280,7 @@ require('lazy').setup({
 
 -- Set highlight on search
 vim.o.hlsearch = false
-
+vim.wo.relativenumber = true
 -- Make line numbers default
 vim.wo.number = true
 
@@ -309,9 +314,24 @@ vim.o.completeopt = 'menuone,noselect'
 
 -- NOTE: You should make sure your terminal supports this
 vim.o.termguicolors = true
+local harpoon = require("harpoon")
 
+-- REQUIRED
+harpoon:setup()
+-- REQUIRED
+
+vim.keymap.set("n", "<leader>-", function() harpoon:list():append() end)
+vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+
+vim.keymap.set("n", "<F1>", function() harpoon:list():select(1) end)
+vim.keymap.set("n", "<F2>", function() harpoon:list():select(2) end)
+vim.keymap.set("n", "<F3>", function() harpoon:list():select(3) end)
+vim.keymap.set("n", "<F4>", function() harpoon:list():select(4) end)
 -- [[ Basic Keymaps ]]
 
+vim.keymap.set('n', '<leader>w', function()
+  vim.cmd 'write' -- Save the file
+end, { noremap = true, silent = true, desc = "Indent and write file" })
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
@@ -423,7 +443,7 @@ vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = 
 vim.defer_fn(function()
   require('nvim-treesitter.configs').setup {
     -- Add languages to be installed here that you want installed for treesitter
-    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash' },
+    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'java'},
 
     -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
     auto_install = false,
@@ -565,11 +585,11 @@ require('mason-lspconfig').setup()
 local servers = {
   -- clangd = {},
   -- gopls = {},
-  -- pyright = {},
+   pyright = {},
   -- rust_analyzer = {},
-  -- tsserver = {},
-  -- html = { filetypes = { 'html', 'twig', 'hbs'} },
-
+   tsserver = {},
+   html = { filetypes = { 'html', 'twig', 'hbs'} },
+   jdtls = {},
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
