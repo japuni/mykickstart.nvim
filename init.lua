@@ -43,7 +43,13 @@ P.S. You can delete this when you're done too. It's your config now :)
 --  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
-
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.incsearch = true
+vim.opt.termguicolors = true
+vim.opt.scrolloff = 8
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    https://github.com/folke/lazy.nvim
 --    `:help lazy.nvim.txt` for more info
@@ -68,12 +74,17 @@ vim.opt.rtp:prepend(lazypath)
 --    as they will be available in your neovim runtime.
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
-
-{
-  'ThePrimeagen/harpoon',
-  branch = 'harpoon2',
-  requires = 'nvim-lua/plenary.nvim',
-},
+  {
+      'tzachar/local-highlight.nvim',
+      config = function()
+        require('local-highlight').setup()
+      end
+  },
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    requires = 'nvim-lua/plenary.nvim',
+  },
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
@@ -118,7 +129,7 @@ require('lazy').setup({
   },
 
   -- Useful plugin to show you pending keybinds.
-  { 'folke/which-key.nvim', opts = {} },
+  { 'folke/which-key.nvim',  opts = {} },
   {
     -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
@@ -196,10 +207,10 @@ require('lazy').setup({
 
   {
     -- Theme inspired by Atom
-    'navarasu/onedark.nvim',
+    'rebelot/kanagawa.nvim',
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme 'onedark'
+      vim.cmd.colorscheme 'kanagawa'
     end,
   },
 
@@ -271,7 +282,7 @@ require('lazy').setup({
   --    Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   --
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
 }, {})
 
 -- [[ Setting options ]]
@@ -286,7 +297,19 @@ vim.wo.number = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
+-- Save and indent 
+vim.keymap.set('n', '<leader>w', function()
+  -- Save the current cursor position
+  local save_cursor = vim.api.nvim_win_get_cursor(0)
+  -- Indent the whole file
+  vim.cmd 'normal! ggVG='
+  -- Restore the cursor position
+  vim.api.nvim_win_set_cursor(0, save_cursor)
+  -- Save the file
+  vim.cmd 'write'
+end, { noremap = true, silent = true, desc = "Indent and write file" })
 
+-- Sync clipboard between OS and Neovim.
 -- Sync clipboard between OS and Neovim.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
@@ -301,6 +324,12 @@ vim.o.undofile = true
 -- Case-insensitive searching UNLESS \C or capital in search
 vim.o.ignorecase = true
 vim.o.smartcase = true
+-- Set background to transparent to show wallpaper
+vim.api.nvim_set_hl(0, "Normal", {bg = "none"})
+vim.api.nvim_set_hl(0, "NormalFloat", {bg = "none"})
+vim.api.nvim_set_hl(0, "NormalNC", {bg = "none"})
+vim.api.nvim_set_hl(0, "SignColumn", {bg = "none"})
+vim.api.nvim_set_hl(0, "Window", {bg = "none"})
 
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
@@ -329,9 +358,6 @@ vim.keymap.set("n", "<F3>", function() harpoon:list():select(3) end)
 vim.keymap.set("n", "<F4>", function() harpoon:list():select(4) end)
 -- [[ Basic Keymaps ]]
 
-vim.keymap.set('n', '<leader>w', function()
-  vim.cmd 'write' -- Save the file
-end, { noremap = true, silent = true, desc = "Indent and write file" })
 -- Keymaps for better default experience
 -- See `:help vim.keymap.set()`
 vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
@@ -443,12 +469,12 @@ vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = 
 vim.defer_fn(function()
   require('nvim-treesitter.configs').setup {
     -- Add languages to be installed here that you want installed for treesitter
-    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'java'},
+    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'java', 'html'},
 
     -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
-    auto_install = false,
+    auto_install = true,
 
-    highlight = { enable = true },
+    highlight = { enable = true},
     indent = { enable = true },
     incremental_selection = {
       enable = true,
@@ -585,23 +611,45 @@ require('mason-lspconfig').setup()
 local servers = {
   -- clangd = {},
   -- gopls = {},
-   pyright = {},
+  pyright = {},
   -- rust_analyzer = {},
-   tsserver = {},
-   html = { filetypes = { 'html', 'twig', 'hbs'} },
-   jdtls = {},
+  tsserver = {},
+  html = { filetypes = { 'html', 'twig', 'hbs' } },
+   jdtls = {
+    cmd = {"jdtls"},
+    init_options = {
+      -- Configuration options for JDTLS
+      -- Example: pointing to JDK and including sources
+      workspace = {
+        checkThirdParty = false,
+        -- Use the JAVA_HOME environment variable
+        javaHome = os.getenv("JAVA_HOME"),
+        configuration = {
+          "java.symbols.includeSourceMethodDeclarations" == true,
+          "java.configuration.runtimes" == {
+            {
+              name = "JavaSE-18",
+              path = os.getenv("JAVA_HOME"),
+              sources = {os.getenv("JAVA_HOME") .. "/lib/src.zip"},
+            },
+          },
+        },
+      },
+    },
+  },
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
       telemetry = { enable = false },
       -- NOTE: toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-      -- diagnostics = { disable = { 'missing-fields' } },
+       diagnostics = { disable = { 'missing-fields' } },
     },
   },
 }
 
 -- Setup neovim lua configuration
 require('neodev').setup()
+require('lspconfig').jdtls.setup(servers.jdtls)
 
 -- nvim-cmp supports additional completion capabilities, so broadcast that to servers
 local capabilities = vim.lsp.protocol.make_client_capabilities()
