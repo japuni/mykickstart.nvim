@@ -1,46 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-
-Kickstart.nvim is *not* a distribution.
-
-Kickstart.nvim is a template for your own configuration.
-  The goal is that you can read every line of code, top-to-bottom, understand
-  what your configuration is doing, and modify it to suit your needs.
-
-  Once you've done that, you should start exploring, configuring and tinkering to
-  explore Neovim!
-
-  If you don't know anything about Lua, I recommend taking some time to read through
-  a guide. One possible example:
-  - https://learnxinyminutes.com/docs/lua/
-
-
-  And then you can explore or search through `:help lua-guide`
-  - https://neovim.io/doc/user/lua-guide.html
-
-
-Kickstart Guide:
-
-I have left several `:help X` comments throughout the init.lua
-You should run that command and read that help section for more information.
-
-In addition, I have some `NOTE:` items throughout the file.
-These are for you, the reader to help understand what is happening. Feel free to delete
-them once you know what you're doing, but they should serve as a guide for when you
-are first encountering a few different constructs in your nvim config.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now :)
---]]
-
--- Set <space> as the leader key
--- See `:help mapleader`
---  NOTE: Must happen before plugins are required (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.opt.tabstop = 4
@@ -75,15 +32,31 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
   {
-      'tzachar/local-highlight.nvim',
-      config = function()
-        require('local-highlight').setup()
-      end
+    'tzachar/local-highlight.nvim',
+    config = function()
+      require('local-highlight').setup()
+    end
   },
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
     requires = 'nvim-lua/plenary.nvim',
+  }, {
+  "folke/todo-comments.nvim",
+  dependencies = { "nvim-lua/plenary.nvim" },
+  opts = {
+    highlight = {
+      comments_only = false }
+    -- your configuration comes here
+    -- or leave it empty to use the default settings
+    -- refer to the configuration section below
+  }
+},
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = { "markdown" },
+    build = function() vim.fn["mkdp#util#install"]() end,
   },
   -- Git related plugins
   'tpope/vim-fugitive',
@@ -104,7 +77,6 @@ require('lazy').setup({
 
       -- Useful status updates for LSP
       -- NOTE: `opts = {}` is the same as calling `require('fidget').setup({})`
-      { 'j-hui/fidget.nvim', opts = {} },
 
       -- Additional lua configuration, makes nvim stuff amazing!
       'folke/neodev.nvim',
@@ -128,6 +100,7 @@ require('lazy').setup({
     },
   },
 
+
   -- Useful plugin to show you pending keybinds.
   { 'folke/which-key.nvim',  opts = {} },
   {
@@ -136,11 +109,11 @@ require('lazy').setup({
     opts = {
       -- See `:help gitsigns.txt`
       signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
+        add = { hl = 'GitSignsAdd', text = '', numhl = 'GitSignsAddNr', linehl = 'GitSignsAddLn' },
+        change = { hl = 'GitSignsChange', text = '', numhl = 'GitSignsChangeNr', linehl = 'GitSignsChangeLn' },
+        delete = { hl = 'GitSignsDelete', text = '', numhl = 'GitSignsDeleteNr', linehl = 'GitSignsDeleteLn' },
+        topdelete = { hl = 'GitSignsTopDelete', text = '', numhl = 'GitSignsTopDeleteNr', linehl = 'GitSignsTopDeleteLn' },
+        changedelete = { hl = 'GitSignsChange', text = '', numhl = 'GitSignsChangeNr', linehl = 'GitSignsChangeLn' },
       },
       on_attach = function(bufnr)
         local gs = package.loaded.gitsigns
@@ -201,18 +174,40 @@ require('lazy').setup({
 
         -- Text object
         map({ 'o', 'x' }, 'ih', ':<C-U>Gitsigns select_hunk<CR>', { desc = 'select git hunk' })
+        vim.cmd([[
+            hi GitSignsAdd guibg=NONE ctermbg=NONE
+            hi GitSignsChange guibg=NONE ctermbg=NONE
+            hi GitSignsDelete guibg=NONE ctermbg=NONE
+            hi GitSignsTopDelete guibg=NONE ctermbg=NONE
+            hi GitSignsAddNr guibg=NONE ctermbg=NONE
+            hi GitSignsChangeNr guibg=NONE ctermbg=NONE
+            hi GitSignsDeleteNr guibg=NONE ctermbg=NONE
+            hi GitSignsTopDeleteNr guibg=NONE ctermbg=NONE
+            hi GitSignsAddLn guibg=NONE ctermbg=NONE
+            hi GitSignsChangeLn guibg=NONE ctermbg=NONE
+            hi GitSignsDeleteLn guibg=NONE ctermbg=NONE
+            hi GitSignsTopDeleteLn guibg=NONE ctermbg=NONE        ]])
       end,
     },
   },
 
+
+
   {
-    -- Theme inspired by Atom
     'rebelot/kanagawa.nvim',
     priority = 1000,
     config = function()
+      require('kanagawa').setup({
+        transparent = true,
+      })
       vim.cmd.colorscheme 'kanagawa'
-    end,
+    end
   },
+  -- Set numberline to transparent also
+  vim.cmd([[
+    autocmd ColorScheme * hi LineNr ctermfg=208 guifg=#af87d7 ctermbg=NONE guibg=NONE
+    autocmd ColorScheme * hi SignColumn ctermbg=NONE guibg=NONE
+]]),
 
   {
     -- Set lualine as statusline
@@ -220,21 +215,12 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
-        icons_enabled = false,
-        theme = 'onedark',
+        icons_enabled = true,
+        theme = 'kanagawa',
         component_separators = '|',
         section_separators = '',
       },
     },
-  },
-
-  {
-    -- Add indentation guides even on blank lines
-    'lukas-reineke/indent-blankline.nvim',
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help ibl`
-    main = 'ibl',
-    opts = {},
   },
 
   -- "gc" to comment visual regions/lines
@@ -273,7 +259,7 @@ require('lazy').setup({
   -- NOTE: Next Step on Your Neovim Journey: Add/Configure additional "plugins" for kickstart
   --       These are some example plugins that I've included in the kickstart repository.
   --       Uncomment any of the lines below to enable them.
-  -- require 'kickstart.plugins.autoformat',
+  require 'kickstart.plugins.autoformat',
   -- require 'kickstart.plugins.debug',
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
@@ -297,17 +283,8 @@ vim.wo.number = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
--- Save and indent 
-vim.keymap.set('n', '<leader>w', function()
-  -- Save the current cursor position
-  local save_cursor = vim.api.nvim_win_get_cursor(0)
-  -- Indent the whole file
-  vim.cmd 'normal! ggVG='
-  -- Restore the cursor position
-  vim.api.nvim_win_set_cursor(0, save_cursor)
-  -- Save the file
-  vim.cmd 'write'
-end, { noremap = true, silent = true, desc = "Indent and write file" })
+-- Save and indent
+vim.api.nvim_set_keymap('n', '<Leader>w', ':w<CR>', { noremap = true, silent = true })
 
 -- Sync clipboard between OS and Neovim.
 -- Sync clipboard between OS and Neovim.
@@ -324,12 +301,6 @@ vim.o.undofile = true
 -- Case-insensitive searching UNLESS \C or capital in search
 vim.o.ignorecase = true
 vim.o.smartcase = true
--- Set background to transparent to show wallpaper
-vim.api.nvim_set_hl(0, "Normal", {bg = "none"})
-vim.api.nvim_set_hl(0, "NormalFloat", {bg = "none"})
-vim.api.nvim_set_hl(0, "NormalNC", {bg = "none"})
-vim.api.nvim_set_hl(0, "SignColumn", {bg = "none"})
-vim.api.nvim_set_hl(0, "Window", {bg = "none"})
 
 -- Keep signcolumn on by default
 vim.wo.signcolumn = 'yes'
@@ -349,13 +320,15 @@ local harpoon = require("harpoon")
 harpoon:setup()
 -- REQUIRED
 
-vim.keymap.set("n", "<leader>-", function() harpoon:list():append() end)
+
+vim.keymap.set("n", "<leader>-", function() harpoon:list():append() end, { desc = 'Add to HarpoonList' })
 vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
 
 vim.keymap.set("n", "<F1>", function() harpoon:list():select(1) end)
 vim.keymap.set("n", "<F2>", function() harpoon:list():select(2) end)
 vim.keymap.set("n", "<F3>", function() harpoon:list():select(3) end)
 vim.keymap.set("n", "<F4>", function() harpoon:list():select(4) end)
+vim.keymap.set("n", "<F5>", function() harpoon:list():select(4) end)
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -469,12 +442,12 @@ vim.keymap.set('n', '<leader>sr', require('telescope.builtin').resume, { desc = 
 vim.defer_fn(function()
   require('nvim-treesitter.configs').setup {
     -- Add languages to be installed here that you want installed for treesitter
-    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'java', 'html'},
+    ensure_installed = { 'c', 'cpp', 'go', 'lua', 'python', 'rust', 'tsx', 'javascript', 'typescript', 'vimdoc', 'vim', 'bash', 'java', 'html' },
 
     -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
     auto_install = true,
 
-    highlight = { enable = true},
+    highlight = { enable = true },
     indent = { enable = true },
     incremental_selection = {
       enable = true,
@@ -557,7 +530,7 @@ local on_attach = function(_, bufnr)
   nmap('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
   nmap('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
   nmap('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-  nmap('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+  nmap('<leader>ås', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
 
   -- See `:help K` for why this keymap
   nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
@@ -565,9 +538,9 @@ local on_attach = function(_, bufnr)
 
   -- Lesser used LSP functionality
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
-  nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
-  nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
-  nmap('<leader>wl', function()
+  nmap('<leader>a', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+  nmap('<leader>år', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+  nmap('<leader>ål', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
@@ -586,7 +559,6 @@ require('which-key').register {
   ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
   ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
   ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
-  ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
 }
 -- register which-key VISUAL mode
 -- required for visual <leader>hs (hunk stage) to work
@@ -615,34 +587,13 @@ local servers = {
   -- rust_analyzer = {},
   tsserver = {},
   html = { filetypes = { 'html', 'twig', 'hbs' } },
-   jdtls = {
-    cmd = {"jdtls"},
-    init_options = {
-      -- Configuration options for JDTLS
-      -- Example: pointing to JDK and including sources
-      workspace = {
-        checkThirdParty = false,
-        -- Use the JAVA_HOME environment variable
-        javaHome = os.getenv("JAVA_HOME"),
-        configuration = {
-          "java.symbols.includeSourceMethodDeclarations" == true,
-          "java.configuration.runtimes" == {
-            {
-              name = "JavaSE-18",
-              path = os.getenv("JAVA_HOME"),
-              sources = {os.getenv("JAVA_HOME") .. "/lib/src.zip"},
-            },
-          },
-        },
-      },
-    },
-  },
+  jdtls = {},
   lua_ls = {
     Lua = {
       workspace = { checkThirdParty = false },
       telemetry = { enable = false },
       -- NOTE: toggle below to ignore Lua_LS's noisy `missing-fields` warnings
-       diagnostics = { disable = { 'missing-fields' } },
+      diagnostics = { disable = { 'missing-fields' } },
     },
   },
 }
@@ -695,7 +646,7 @@ cmp.setup {
     ['<C-d>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete {},
-    ['<CR>'] = cmp.mapping.confirm {
+    ['<C-y>'] = cmp.mapping.confirm {
       behavior = cmp.ConfirmBehavior.Replace,
       select = true,
     },
@@ -722,6 +673,10 @@ cmp.setup {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
     { name = 'path' },
+  },
+  require('lspconfig').elixirls.setup {
+    cmd = { "/home/adam/.local/share/nvim/mason/packages/elixir-ls/language_server.sh" },
+    on_attach = on_attach
   },
 }
 
