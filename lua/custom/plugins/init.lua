@@ -9,7 +9,8 @@ return {
     config = function()
       require("hlchunk").setup({
         line_num = {
-          enable = false,
+          enable = true,
+          style = "#af87d7",
         },
         indent = {
           chars = {
