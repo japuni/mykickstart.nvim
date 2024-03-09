@@ -192,7 +192,6 @@ require('lazy').setup({
   },
 
 
-
   {
     'rebelot/kanagawa.nvim',
     priority = 1000,
@@ -673,11 +672,16 @@ cmp.setup {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
     { name = 'path' },
+    { name = 'cody' },
   },
   require('lspconfig').elixirls.setup {
     cmd = { "/home/adam/.local/share/nvim/mason/packages/elixir-ls/language_server.sh" },
     on_attach = on_attach
   },
+}
+
+require("sg").setup {
+  on_attach = on_attach
 }
 
 -- The line beneath this is called `modeline`. See `:help modeline`
